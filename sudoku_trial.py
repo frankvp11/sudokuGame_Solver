@@ -1,7 +1,9 @@
+import time
 from email.mime import base
 import pygame
 from copy import deepcopy
 from random import shuffle
+from dokusan import generators
 
 
 pygame.init()
@@ -26,8 +28,7 @@ class InputBox:
         self.txt_rect = self.txt_surface.get_rect()
         self.cursor = pygame.Rect(self.txt_rect.topright, (3, self.txt_rect.height + 2))
 
-    def handle_event(self, event):
-        global board_stuff
+    def handle_event(self, event, board_stuff=None):
         if event.type == pygame.MOUSEBUTTONDOWN:
             # If the user clicked on the input_box rect.
             if self.rect.collidepoint(event.pos):
@@ -174,23 +175,24 @@ class Solver():
 
  
 
-from dokusan import generators
+def create_board():
+    arr = list(str(generators.random_sudoku()))
+    sudoku_board = []
+    lines = []
+    print((arr))
+    print(len(arr))
+    for i in range(len(arr)):
+        if len(lines) == 9:
+            sudoku_board.append(lines)
+            lines = []
+        lines.append(int(arr[i]))
+    sudoku_board.append(lines)
 
-arr = list(str(generators.random_sudoku()))
-sudoku_board = []
-lines = []
-print((arr))
-print(len(arr))
-for i in range(len(arr)):
-    if len(lines) == 9:
-        sudoku_board.append(lines)
-        lines = []
-    lines.append(int(arr[i]))
-sudoku_board.append(lines)
 
+    for j in range(len(sudoku_board)):
+        print(sudoku_board[j])
+    return sudoku_board
 
-for j in range(len(sudoku_board)):
-    print(sudoku_board[j])
 
 class Hint():
     def __init__(self, grid):
@@ -231,18 +233,17 @@ sudoku_board =[
 
 
 
-board_stuff = Solver(sudoku_board) #sudoku_board
-copy_of_board = deepcopy(sudoku_board)
-hint_giver = Hint(copy_of_board)
 
 
 
-def main():
-    
+
+def main(sudoku_board):
+    board_stuff = Solver(sudoku_board) #sudoku_board
+    copy_of_board = deepcopy(sudoku_board)
+    hint_giver = Hint(copy_of_board)
     lives = 5
-    global board_stuff  
 
-
+       
     running = True
     map_of_inputs = []
     for i in range(9):
@@ -253,47 +254,58 @@ def main():
     solver_button = Button(image=None, pos=(1100, 100), text_input="Solve", font=get_font(20), base_color='white', hovering_color='green')
     hint_button = Button(image=None, pos=(1100, 150), text_input="Hint", font=get_font(20), base_color='white', hovering_color='green')
     lives_text = Button(image=None, pos=(1100, 200), text_input=f"Lives: {lives}", font=get_font(20), base_color='white', hovering_color='green')
-
-    horizontal_lines_one = pygame.draw.line(screen, (255,255,255), (100, 100), (1000, 100), width=15)
-    horizontal_lines_two = pygame.draw.line(screen, (255,255,255), (100, 400), (1000, 400), width=15)
-    horizontal_lines_three = pygame.draw.line(screen, (255,255,255), (100, 700), (1000, 700), width=15)
-    horizontal_lines_four = pygame.draw.line(screen, (255,255,255), (100, 1000), (1000, 1000), width=15)
+    go_back_button = Button(image=None, pos=(1100, 300), text_input="Main Menu", font=get_font(20), base_color='white', hovering_color='green')
     
-    vertical_lines_one = pygame.draw.line(screen, (255,255,255), (95, 100), (95, 1000), width=15)
-    vertical_lines_two = pygame.draw.line(screen, (255,255,255), (395, 100), (395, 1000), width=15)
-    vertical_lines_three = pygame.draw.line(screen, (255,255,255), (695, 100), (695, 1000), width=15)
-    vertical_lines_four = pygame.draw.line(screen, (255,255,255), (996, 100), (995, 1000), width=15)
+    
+ 
 
-    while running:
+    while running:            
         screen.fill(background_colour) 
+        horizontal_lines_one = pygame.draw.line(screen, (255,255,255), (100, 100), (1000, 100), width=15)
+        horizontal_lines_two = pygame.draw.line(screen, (255,255,255), (100, 400), (1000, 400), width=15)
+        horizontal_lines_three = pygame.draw.line(screen, (255,255,255), (100, 700), (1000, 700), width=15)
+        horizontal_lines_four = pygame.draw.line(screen, (255,255,255), (100, 1000), (1000, 1000), width=15)
+            
+        vertical_lines_one = pygame.draw.line(screen, (255,255,255), (95, 100), (95, 1000), width=15)
+        vertical_lines_two = pygame.draw.line(screen, (255,255,255), (395, 100), (395, 1000), width=15)
+        vertical_lines_three = pygame.draw.line(screen, (255,255,255), (695, 100), (695, 1000), width=15)
+        vertical_lines_four = pygame.draw.line(screen, (255,255,255), (996, 100), (995, 1000), width=15)
+
+
+
 
         mouse_position = pygame.mouse.get_pos()
         solver_button.changeColor(mouse_position)
         hint_button.changeColor(mouse_position)
-
+        go_back_button.changeColor(mouse_position)
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
             for i in range(len(map_of_inputs)):
                 for j in range(len(map_of_inputs)):
-                    map_of_inputs[i][j].handle_event(event)
+                    map_of_inputs[i][j].handle_event(event, board_stuff)
             if solver_button.checkForInput(mouse_position) and event.type == pygame.MOUSEBUTTONDOWN:
                 board_stuff.solver(0, 0)
                 for i in range(len(map_of_inputs)):
                     for j in range(len(map_of_inputs[i])):
                         map_of_inputs[i][j].text = str(board_stuff.grid[i][j])
-                        
+                lives = 0
                 lives_text = Button(image=None, pos=(1100, 200), text_input=f"Lives: 0", font=get_font(20), base_color='white', hovering_color='green')
+            if go_back_button.checkForInput(mouse_position) and event.type == pygame.MOUSEBUTTONDOWN:
+                play()
 
             if hint_button.checkForInput(mouse_position) and event.type == pygame.MOUSEBUTTONDOWN:
-                hint, row, col = hint_giver.give_hint()
-                board_stuff.grid[row][col] = hint
-                map_of_inputs[row][col].text = str(hint)
-                print(hint, "HINT")
-                print(row, col, "ROW, COL")
-                lives -= 1
-                lives_text = Button(image=None, pos=(1100, 200), text_input=f"Lives: {lives}", font=get_font(20), base_color='white', hovering_color='green')
-        
+                if lives > 0:
+
+                    hint, row, col = hint_giver.give_hint()
+                    board_stuff.grid[row][col] = hint
+                    map_of_inputs[row][col].text = str(hint)
+                    map_of_inputs[row][col].color = (255, 0,0)
+                    print(hint, "HINT")
+                    print(row, col, "ROW, COL")
+                    lives -= 1
+                    lives_text = Button(image=None, pos=(1100, 200), text_input=f"Lives: {lives}", font=get_font(20), base_color='white', hovering_color='green')
+            
         for i in range(len(map_of_inputs)):
             for j in range(len(map_of_inputs[i])):
                 map_of_inputs[i][j].draw(screen)
@@ -302,10 +314,35 @@ def main():
         solver_button.update(screen)
         hint_button.update(screen)
         lives_text.update(screen)
-        
-        #pygame.display.flip()
+        go_back_button.update(screen)
+        pygame.display.flip()
         pygame.display.update()
 
 
-main()
+
+
+def play():
+    screen.fill(background_colour)
+    reset_board_button = Button(image=None, pos=(500, 500), text_input="Play Sudoku", font=get_font(35), base_color='white', hovering_color='green')
+    quit_button = Button(image=None, pos=(500, 600), text_input="Quit", font=get_font(35), base_color='white', hovering_color='green')
+    while True:
+        screen.fill(background_colour)
+        mouse_position = pygame.mouse.get_pos()
+        reset_board_button.changeColor(mouse_position)
+        quit_button.changeColor(mouse_position)
+        for event in pygame.event.get():
+            if quit_button.checkForInput(mouse_position) and event.type == pygame.MOUSEBUTTONDOWN:
+                break
+            if reset_board_button.checkForInput(mouse_position) and event.type == pygame.MOUSEBUTTONDOWN:
+                sudoku_board = create_board()
+                main(sudoku_board)
+        
+        reset_board_button.update(screen)
+        quit_button.update(screen)
+        pygame.display.flip()
+
+        pygame.display.update()
+
+
+play()
 
